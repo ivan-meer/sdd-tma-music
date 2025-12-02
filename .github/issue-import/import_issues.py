@@ -59,6 +59,7 @@ def api_request(method, path, token, data=None, params=None):
 
 
 def find_milestone_number(owner_repo, token, milestone_title):
+    """Return milestone number or None if not found."""
     if not milestone_title:
         return None
     owner, repo = owner_repo.split('/')
@@ -78,7 +79,23 @@ def find_milestone_number(owner_repo, token, milestone_title):
     return None
 
 
+def create_milestone_if_missing(owner_repo, token, milestone_title, description=None):
+    """Create milestone if it doesn't exist and return its number, or None on failure."""
+    owner, repo = owner_repo.split('/')
+    # Try to create milestone
+    path = f'/repos/{owner}/{repo}/milestones'
+    payload = {'title': milestone_title}
+    if description:
+        payload['description'] = description
+    res = api_request('POST', path, token, data=payload)
+    if res and res.get('number'):
+        return res.get('number')
+    # creation failed
+    return None
+
+
 def create_issue(owner_repo, token, title, body, labels=None, assignees=None, milestone=None):
+    """Create an issue. milestone argument should be milestone number or None."""
     owner, repo = owner_repo.split('/')
     path = f'/repos/{owner}/{repo}/issues'
     payload = {'title': title}
@@ -130,7 +147,14 @@ def main():
         if milestone_name:
             milestone_number = find_milestone_number(args.repo, token, milestone_name)
             if milestone_number is None:
-                print(f'  Milestone "{milestone_name}" not found in repo; issue will be created without milestone')
+                # Try to create the milestone automatically
+                print(f'  Milestone "{milestone_name}" not found in repo; attempting to create it...')
+                created = create_milestone_if_missing(args.repo, token, milestone_name, description=f'Auto-created milestone: {milestone_name}')
+                if created:
+                    milestone_number = created
+                    print(f'  Milestone "{milestone_name}" created with number {milestone_number}')
+                else:
+                    print(f'  Failed to create milestone "{milestone_name}"; issue will be created without milestone')
         if args.dry_run:
             print('  DRY RUN: would create issue with', {'title': title, 'labels': labels, 'assignees': assignees, 'milestone': milestone_number})
         else:

@@ -31,7 +31,11 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- Branches MUST follow constitution naming conventions (feature/, fix/, hotfix/).
+- PRs MUST include an issue reference, a quality checklist (lint, tests, docs) and pass Constitution Check: required reviewers, CI green, architecture label for large changes.
+- Tests: changed modules MUST have >=70% coverage; integration/contract tests REQUIRED for API/contract changes; overall project coverage SHOULD target >=80%.
+- CI gates MUST include: lint, static analysis, unit tests, integration tests and dependency security scan.
+- Security: no critical/unfixed vulnerabilities allowed in CI; critical issues MUST have a documented mitigation plan and target remediation within 72 hours.
 
 ## Project Structure
 
